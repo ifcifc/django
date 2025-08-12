@@ -1,0 +1,136 @@
+{% from 'macros/index.jinja' import index %}
+{% from 'macros/card.jinja' import card %}
+{% from 'macros/table.jinja' import table, col %}
+{% from 'macros/dialog.jinja' import dialog_form %}
+{% from 'macros/input.jinja' import input %}
+
+{% macro stock(articulo) %}
+    {% set color = "bg-green-600" %}
+    {% set total = articulo.stock_total() %}
+    {% if total < 10 %}
+        {% set color = "bg-red-600" %}
+    {% elif total < 25 %}
+        {% set color = "bg-yellow-600" %}
+    {% endif %}
+    <a data-articulo="{{articulo.codigo}}" data-articulo-total="{{total}}" data-articulo-nombre="{{articulo.nombre}}" name="stock_button" class="py-1 {{color}} select-none cursor-pointer hover:brightness-115 text-white rounded-full flex max-w-18 w-18 justify-center">{{total}}</a>
+{% endmacro %}
+
+
+{% macro title() %}
+    <div class="flex justify-between items-center">
+        <h2>Articulos</h2>
+        <a id="b_nuevo" class="bg-orange-600 select-none text-white cursor-pointer px-2 py-1 hover:bg-orange-500">Nuevo articulo</a>
+    </div>
+
+{% endmacro %}
+
+{% call index(class="py-4", title="admin", user=user, messages=messages) %}
+    {% call card(title=title(), card_class="sm:max-w-3xl") %}
+        {% call table(header=["Articulo", "Precio", "Stock", "Codigo", "Acciones"]) %}
+            {% for articulo in articulos %}
+                <tr>
+                    {{ col(body=articulo.nombre) }}
+                    {{ col(body=articulo.precio) }}
+                    {{ col(class="flex justify-center py-4 whitespace-nowrap text-sm text-gray-900", body=stock(articulo)) }}
+                    {{ col(body=articulo.codigo) }}
+                    <td>
+                        <a href="{{ url('admin_detalles', kwargs={'codigo': articulo.codigo}) }}" class="bg-orange-600 select-none text-white cursor-pointer px-2 py-1 hover:bg-orange-500">Detalles</a>
+                        <a data-articulo="{{articulo.codigo}}" data-articulo-nombre="{{articulo.nombre}}" name="eliminar_button" class="bg-orange-600 select-none text-white cursor-pointer px-2 py-1 hover:bg-orange-500">Eliminar</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        {% endcall %}
+    {% endcall %}
+{% endcall %} 
+
+{% call dialog_form(id="stock", title="Añadir o quitar stock", csrf_token=csrf_token, action="stock") %}
+    <input type="hidden" name="codigo">
+    {{ input(name="cantidad", label="Cantidad", type="number") }}
+{% endcall %}
+
+{% call dialog_form(id="eliminar", title="Eliminar articulo", csrf_token=csrf_token, action="eliminar") %}
+    <input type="hidden" name="codigo">
+    <h3>Esta seguro que desea eliminar el articulo?</h3>
+    <p>Esta accion no se puede deshacer</p>
+    <p><span class="font-bold">Articulo:</span> <span id="articulo_nombre"></span></p>
+    <p><span class="font-bold">Codigo:</span> <span id="articulo_codigo"></span></p>
+{% endcall %}
+
+{% call dialog_form(id="nuevo", title="Nuevo articulo", csrf_token=csrf_token, button_text="Guardar", action=url("admin_modificar"), enctype="multipart/form-data") %}
+    {{ input(name="nombre", label="Nombre", type="text") }}
+    {{ input(name="codigo", label="Codigo", type="text") }}
+    {{ input(name="precio", label="Precio", type="number") }}
+    {{ input(name="descripcion", label="Descripcion", type="text") }}
+
+    <hr class="my-2"/>
+
+    <label for="imagen" class="block text-sm font-medium text-gray-700 mb-1">
+        Subir imagen <span class="text-xs text-gray-500">(Formatos: JPG, PNG, WEBP, máximo 5MB)</span>
+    </label>
+    <div class="relative">
+        <input 
+            type="file" 
+            name="imagen" 
+            id="imagen" 
+            accept="image/jpeg, image/png, image/webp"
+            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+        >
+        <div class="bg-orange-600 text-white px-4 py-2 rounded-md inline-flex items-center justify-center border border-transparent hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors duration-200">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+            </svg>
+            <span>Seleccionar archivo</span>
+        </div>
+        <p id="file-name" class="mt-1 text-sm text-gray-500">Ningún archivo seleccionado</p>
+    </div>
+
+    <script>
+        document.getElementById('imagen').addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : 'Ningún archivo seleccionado';
+            document.getElementById('file-name').textContent = fileName;
+        });
+    </script>
+{% endcall %}
+
+<script>
+    const b_nuevo = document.getElementById("b_nuevo");
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        const stockButtons = document.querySelectorAll("[name=stock_button]");
+        stockButtons.forEach(button => {
+            button.addEventListener("click", function() {
+                const codigo = this.dataset.articulo;
+                const nombre = this.dataset.articuloNombre;
+                const total = this.dataset.articuloTotal;
+                const dialog = document.getElementById("dialog_stock");
+                const input = dialog.querySelector("[name=cantidad]");
+                const inputArticulo = dialog.querySelector("[name=codigo]");
+                inputArticulo.value = codigo;
+                input.value = 0;
+                input.min = -total;
+
+                dialog.classList.remove("hidden");
+            });
+        });
+
+        const eliminarButtons = document.querySelectorAll("[name=eliminar_button]");
+        eliminarButtons.forEach(button => {
+            button.addEventListener("click", function() {
+                const codigo = this.dataset.articulo;
+                const dialog = document.getElementById("dialog_eliminar");
+                const input = dialog.querySelector("[name=codigo]");
+                const nombre = this.dataset.articuloNombre;
+                const nombreSpan = dialog.querySelector("#articulo_nombre");
+                const codigoSpan = dialog.querySelector("#articulo_codigo");
+                input.value = codigo;
+                dialog.classList.remove("hidden");
+                nombreSpan.textContent = nombre;
+                codigoSpan.textContent = codigo;
+            });
+        });
+
+        b_nuevo.addEventListener("click", function() {
+            document.getElementById("dialog_nuevo").classList.remove("hidden");
+        });
+    });
+</script>

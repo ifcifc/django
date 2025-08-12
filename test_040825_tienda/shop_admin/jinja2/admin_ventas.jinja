@@ -1,0 +1,21 @@
+{% from 'macros/index.jinja' import index %}
+{% from 'macros/card.jinja' import card %}
+{% from 'macros/table.jinja' import table, col %}
+
+{% call index(class="py-4 flex-col justify-center items-center", title="admin", user=user, messages=messages) %}
+    {% call card("Ventas", card_class="sm:max-w-3xl overflow-y-hidden max-h-128") %}
+        <div class="flex gap-4 overflow-y-auto max-h-100">
+            {% call table(header=["Fecha", "Articulo", "Precio", "Cantidad", "Total"]) %}
+                {% for venta in ventas %}
+                    <tr>
+                        {{ col(body=venta.created_at|datetime("%d/%m/%Y %H:%M")) }}
+                        {{ col(body=venta.stock.articulo) }}
+                        {{ col(body=venta.precio) }}
+                        {{ col(body=venta.stock.cantidad | abs) }}
+                        {{ col(body=venta.movimiento.monto | abs) }}
+                    </tr>
+                {% endfor %}
+            {% endcall %}
+        </div>
+    {% endcall %}
+{% endcall %}

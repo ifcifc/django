@@ -1,0 +1,40 @@
+{% from 'macros/index.jinja' import index %}
+{% from 'macros/table.jinja' import table, col %}
+{% from 'macros/card.jinja' import card %}
+{% from 'macros/input.jinja' import input %}
+{% from 'macros/dialog.jinja' import dialog_form %}
+
+{% macro title() %}
+<div class="flex items-center justify-between">
+    <h1 class="text-xl font-bold">Movimientos</h1>
+    <a class="bg-orange-600 select-none text-white cursor-pointer px-2 py-1 hover:bg-orange-500" onclick="document.getElementById('dialog_transfer_funds').classList.remove('hidden')">Transferir</a>
+    <a class="bg-orange-600 select-none text-white cursor-pointer px-2 py-1 hover:bg-orange-500" onclick="document.getElementById('dialog_add_funds').classList.remove('hidden')">Añadir fondos</a>
+</div>
+{% endmacro %}
+
+
+{% call index(class="py-4", title="Movimientos", user=user, messages=messages) %}
+    {% call card(title())%}
+        {% call table(header=["Tipo de movimiento", "Monto", "A Usuario", "Fecha"]) %}
+            {% for movimiento in movimientos %}
+                <tr>
+                    {{ col(body=movimiento.get_tipo_de_movimiento()) }}
+                    {{ col(body=movimiento.monto) }}
+                    {{ col(body=movimiento.transferencia.username if movimiento.es_transferencia else "-") }}
+                    {{ col(body=movimiento.created_at|datetime("%d/%m/%Y %H:%M")) }}
+                </tr>
+            {% endfor %}
+        {% endcall %}
+    {% endcall %}
+{% endcall %}
+
+
+{% call dialog_form(id="add_funds", title="Añadir fondos", button_text="Añadir fondos", action="", csrf_token=csrf_token) %}
+    {{ input(id="monto", name="monto", label="Monto", type="number", required=True) }}
+{% endcall %}
+
+{% call dialog_form(id="transfer_funds", title="Transferir fondos", button_text="Transferir fondos", action="transferir", csrf_token=csrf_token) %}
+    {{ input(id="monto", name="monto", label="Monto", type="number", required=True) }}
+    {{ input(id="usuario", name="usuario", label="Usuario", type="text", required=True) }}
+{% endcall %}
+

@@ -1,0 +1,93 @@
+{% macro navbar(user) %}
+<div id="FAKE_HEADER" class="top-0 p-7 w-full"></div>
+<header class="fixed flex flex-row justify-between items-center top-0 z-50 bg-blue-900 text-white p-4 md:px-20 w-full shadow-[0_4px_10px_rgba(0,0,0,0.2)]">
+    <a href="/" class="flex flex-row justify-between items-center">
+        <i data-lucide="home" class="w-1/2"></i>
+        <h1 class="text-xl font-bold ml-2">Inicio</h1>
+    </a>
+    
+    {% if user is not none %}
+        {% if user.is_authenticated %}
+            <span class="font-bold">Fondos: ${{get_monto(user)|round(2)}}</span>
+        {% endif %}
+        <!-- Menú de escritorio -->
+        <div>
+            <ul class="hidden md:flex space-x-4">
+                {% if user.is_authenticated %}
+                    <li><a href="#" class="hover:underline">Tienda</a></li>
+                    {% if user.is_staff %}
+                        <li><a href="#" class="hover:underline">Admin</a></li>
+                    {% endif %}
+                    {% if user.is_superuser %}
+                        <li><a href="#" class="hover:underline">Superadmin</a></li>
+                    {% endif %}
+                    <li><a href="#" class="hover:underline">Carrito</a></li>
+                    <li><a href="#" class="hover:underline">Logout</a></li>
+                {% else %}
+                    <li><a href="#" class="hover:underline">Carrito</a></li>
+                    <li><a href="#" class="hover:underline">Login</a></li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <!-- Botón de menú móvil -->
+        <button id="menuButton" class="md:hidden p-2 focus:outline-none">
+            <i id="menuIcon" data-lucide="menu" class="w-6 h-6"></i>
+            <i id="closeIcon" data-lucide="x" class="w-6 h-6 hidden"></i>
+        </button>
+
+        <!-- Menú móvil -->
+        <div id="mobileMenu" class="hidden absolute top-full left-0 right-0 bg-blue-900 z-50">
+            <ul class="flex flex-col space-y-4 p-4">
+                {% if user.is_authenticated %}
+                    <li><a href="#" class="block py-2 hover:bg-blue-800 px-4 rounded">Tienda</a></li>
+                    {% if user.is_staff %}
+                        <li><a href="#" class="block py-2 hover:bg-blue-800 px-4 rounded">Admin</a></li>
+                    {% endif %}
+                    {% if user.is_superuser %}
+                        <li><a href="#" class="block py-2 hover:bg-blue-800 px-4 rounded">Superadmin</a></li>
+                    {% endif %}
+                    <li><a href="#" class="block py-2 hover:bg-blue-800 px-4 rounded">Carrito</a></li>
+                    <li><a href="#" class="block py-2 hover:bg-blue-800 px-4 rounded">Logout</a></li>
+                {% else %}
+                    <li><a href="#" class="block py-2 hover:bg-blue-800 px-4 rounded">Carrito</a></li>
+                    <li><a href="#" class="block py-2 hover:bg-blue-800 px-4 rounded">Login</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    {% endif %}
+</header>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const menuButton = document.getElementById('menuButton');
+    const mobileMenu = document.getElementById('mobileMenu');
+    
+    menuButton?.addEventListener('click', function() {
+        mobileMenu.classList.toggle('hidden');
+        
+        // Cambiar el ícono del botón
+        if (mobileMenu.classList.contains('hidden')) {
+            document.getElementById('menuIcon').classList.remove('hidden');
+            document.getElementById('closeIcon').classList.add('hidden');
+        } else {
+            document.getElementById('menuIcon').classList.add('hidden');
+            document.getElementById('closeIcon').classList.remove('hidden');
+        }
+    });
+    
+    // Cerrar el menú al hacer clic fuera de él
+    document.addEventListener('click', function(event) {
+        if(!menuButton || !mobileMenu){
+            return;
+        }
+        if (!mobileMenu.contains(event.target) && !menuButton.contains(event.target)) {
+            mobileMenu.classList.add('hidden');
+            document.getElementById('menuIcon').classList.remove('hidden');
+            document.getElementById('closeIcon').classList.add('hidden');
+        }
+    });
+});
+</script>
+
+{% endmacro %}

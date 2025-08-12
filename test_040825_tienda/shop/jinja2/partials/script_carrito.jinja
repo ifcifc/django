@@ -1,0 +1,93 @@
+<script>
+    let debounce_timeout_carrito = null
+    // Debounce simple para el carrito
+    function debounce_carrito(codigo, valor){
+        clearTimeout(debounce_timeout_carrito)
+        debounce_timeout_carrito = setTimeout(()=>{
+            fetch('{{ url("carrito") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({codigo: codigo, cantidad: valor})
+            })
+            .then(async(response) => {
+                if (!response.ok) {
+                    //Si la respuesta no es un json
+                    const contentType = response.headers.get("content-type");
+                    if(contentType && contentType.includes("application/json")){
+                        const error = await response.json()
+                        throw new Error(error.message);
+                    }
+                    const error =  new Error("Error al hacer la solicitud");
+                    error.status = response.status;
+                    error.text = await response.text();
+                    throw error;
+                }
+                return await response.json();
+            })
+            .then(data => {
+                console.log('Respuesta del servidor:', data);
+            })
+            .catch(error => {
+                alert("ERROR:" + error.message)
+                console.error('Hubo un problema con la solicitud fetch:', error.text);
+            });
+        }, 500)
+    }
+
+    // Botones de mas y menos en el carrito
+    document.addEventListener("DOMContentLoaded", function() {
+        const b_menos = document.getElementsByName("b-menos")
+        const b_mas = document.getElementsByName("b-mas")
+        const input_carrito = document.getElementsByName("carrito_value")
+
+        b_menos.forEach(b_m => b_m.addEventListener("click", ()=>{
+            const articulo = b_m.getAttribute("data-articulo")
+            const input = document.getElementById("id_val_" + articulo)
+            const valor = input.value
+            const nuevo_valor = parseInt(valor) - 1
+
+            if(nuevo_valor<0){return;}
+
+            input.value = nuevo_valor
+            input.dispatchEvent(new Event('change'));
+        }));
+        b_mas.forEach(b_m => b_m.addEventListener("click", ()=>{
+            const articulo = b_m.getAttribute("data-articulo")
+            const input = document.getElementById("id_val_" + articulo)
+            const valor = input.value
+
+            if(+input.value<=input.max){
+                const nuevo_valor = parseInt(valor) + 1
+                if(nuevo_valor>input.max)return;
+                input.value = nuevo_valor   
+            }else{
+                input.value = input.max
+            }
+            input.classList.remove("border-red-500")
+            input.dispatchEvent(new Event('change'));
+        }));
+
+        input_carrito.forEach(input => {
+            if((+input.value)>input.max){
+                input.classList.add("border-red-500")
+            }
+
+            input.addEventListener("change", ()=>{
+                if(+input.value>input.max){
+                    input.value = input.max
+                    return;
+                }
+
+                if(+input.value<0){
+                    input.value = 0
+                }
+
+                if(!input.checkValidity())return;
+                debounce_carrito(input.getAttribute("data-articulo"), input.value)
+            })
+        });
+    })
+</script>

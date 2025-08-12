@@ -1,0 +1,40 @@
+{% from 'macros/index.jinja' import index %}
+{% from 'macros/card.jinja' import card %}
+
+{% macro title() %}
+    <div class="flex justify-between items-center">
+        <span class="font-bold">Detalles: {{articulo.nombre}}</span>
+        {% if articulo.stock_total() > 0 %}
+            <div class="flex items-center gap-2">
+                <span class="font-bold">Carrito:</span>
+                <button name="b-menos" data-articulo="{{articulo.codigo}}" type="button"
+                    class="w-8 h-8 bg-orange-600 text-white flex items-center justify-center select-none cursor-pointer hover:bg-orange-500"><i
+                        data-lucide="minus"></i></button>
+                <input id="id_val_{{articulo.codigo}}" data-articulo="{{articulo.codigo}}" name="carrito_value"
+                    value="{{carrito[articulo.codigo] or 0}}" type="number" value="1" min="0" max="{{articulo.stock_total()}}"
+                    class="w-16 h-8 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                <button name="b-mas" data-articulo="{{articulo.codigo}}" type="button"
+                    class="w-8 h-8 bg-orange-600 text-white flex items-center justify-center select-none cursor-pointer hover:bg-orange-500"><i
+                        data-lucide="plus"></i></button>
+            </div>
+        {% else %}
+            <button type="button" class="bg-gray-600 text-white font-bold py-2 px-2 w-full rounded" disabled>Agotado</button>
+        {% endif %}
+    </div>
+{% endmacro %}
+
+{% call index(class="py-4", title="Detalles", user=user) %}
+    {% call card(title())%}
+        <img src="{{ articulo.imagen.url }}" alt="{{ articulo.nombre }}" class="w-full max-h-128 object-cover">
+        <div class="p-4 overflow-y-hidden">
+            <h2 class="font-bold">{{ articulo.nombre }}</h2>
+            <p><span class="font-bold">Precio: $</span>{{ articulo.precio }}</p>
+            <p><span class="font-bold">Codigo: </span>{{ articulo.codigo }}</p>
+            <p><span class="font-bold">Stock: </span>{{ articulo.stock_total() }}</p>
+            <p class="text-wrap"><span class="font-bold">Descripcion: </span>{{ articulo.descripcion }}</p>
+        </div>
+
+    {% endcall %}
+{% endcall %}
+
+{% include 'partials/script_carrito.jinja' %}

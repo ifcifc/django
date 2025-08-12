@@ -1,0 +1,9 @@
+{% macro card(title="", class="", card_class="sm:max-w-2xl") %}
+  <div class="bg-card w-full p-4 sm:rounded-lg sm:shadow-lg flex flex-col border {{card_class}}">
+    <h2 class="text-2xl font-semibold">{{ title }}</h2>
+    <hr class="border-t-2 border-gray-200 my-2">
+    <div class="{{class}}">
+      {{ caller() }}
+    </div>
+  </div>
+{% endmacro %}

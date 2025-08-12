@@ -1,0 +1,43 @@
+{% from 'macros/index.jinja' import index %}
+{% from 'macros/articulo.jinja' import articulo %}
+{% from 'macros/card.jinja' import card %}
+{% from 'macros/input.jinja' import input %}
+
+{% call index(class="py-4", title="Tienda", user=user) %}
+
+    <div class="flex flex-col justify-center items-center w-full gap-4">
+        {% call card("Filtros", class="min-h-12", card_class="max-w-3/4")%}
+            <form method="GET" id="form_filtro">
+                {{ input(id="filtro", name="filtro", type="text", label="Filtrar por nombre o codigo", value=filtro, required=False) }}
+            </form>
+        {% endcall %}
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 gap-4">
+            {% for art in articulos %}
+                {{ articulo(art, carrito) }}
+            {% endfor %}
+        </div>
+    </div>
+{% endcall %}
+
+{% include 'partials/script_carrito.jinja' %}
+
+
+<script>
+    const filtro = document.getElementById('filtro');
+    const form_filtro = document.getElementById('form_filtro');
+
+    let timeoutFilter = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        filtro.addEventListener('input', () => {
+            clearTimeout(timeoutFilter);
+            timeoutFilter = setTimeout(() => {
+                if(!filtro.checkValidity())return;
+
+                form_filtro.submit();
+            }, 1000);
+        })
+    })
+
+</script>

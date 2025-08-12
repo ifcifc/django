@@ -1,0 +1,28 @@
+{% macro articulo(articulo, carrito) %}
+<div
+    class="flex flex-col bg-card border border-gray-200 shadow-lg max-w-64 max-h-120 min-h-120 overflow-hidden hover:bg-gray-100 hover:border-gray-300 dark:hover:bg-gray-200  cursor-pointer select-none">
+    <img src="{{ articulo.imagen.url }}" alt="{{ articulo.nombre }}" class="w-64 h-48 object-cover">
+    <div class="p-4 max-h-48 h-48 max-h-48 overflow-y-hidden">
+        <h2 class="font-bold">{{ articulo.nombre }}</h2>
+        <p><span class="font-bold">Precio: $</span>{{ articulo.precio }}</p>
+        <p><span class="font-bold">Codigo: </span>{{ articulo.codigo }}</p>
+        <p><span class="font-bold">Stock: </span>{{ articulo.stock_total() }}</p>
+        <p class="line-clamp-3"><span class="font-bold">Descripcion: </span>{{ articulo.descripcion }}</p>
+    </div>
+    <hr>
+    <form class="p-2 max-h-24 h-24 gap-1 flex flex-col items-center justify-center">
+        {% if articulo.stock_total() > 0 %}
+            <div class="flex items-center gap-2">
+                <span class="font-bold">Carrito:</span>
+                <button name="b-menos" data-articulo="{{articulo.codigo}}" type="button" class="w-8 h-8 bg-orange-600 text-white flex items-center justify-center select-none cursor-pointer hover:bg-orange-500"><i data-lucide="minus"></i></button>
+                <input id="id_val_{{articulo.codigo}}" data-articulo="{{articulo.codigo}}" name="carrito_value" value="{{carrito[articulo.codigo] or 0}}" type="number" value="1" min="0" max="{{articulo.stock_total()}}" class="w-16 h-8 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                <button name="b-mas" data-articulo="{{articulo.codigo}}" type="button" class="w-8 h-8 bg-orange-600 text-white flex items-center justify-center select-none cursor-pointer hover:bg-orange-500"><i data-lucide="plus"></i></button>
+            </div>
+        {% else %}
+            <button type="button" class="bg-gray-600 text-white font-bold py-2 px-2 w-full rounded" disabled>Agotado</button>
+        {% endif %}
+        <a href="{{ url('detalles', kwargs={'codigo': articulo.codigo}) }}" type="button" class="bg-orange-600 hover:bg-orange-500 text-white text-center select-none cursor-pointer font-bold py-2 px-2 w-full rounded">Detalles</a>
+    </form>
+</div>
+{% endmacro %}
+

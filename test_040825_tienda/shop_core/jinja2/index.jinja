@@ -1,0 +1,25 @@
+{% from 'macros/card.jinja' import card %}
+{% from 'macros/index.jinja' import index %}
+{% from 'macros/card_button.jinja' import card_button %}
+
+{% call index(class="sm:py-16", messages=messages, title=title, user=user) %}
+    {% call card("Menu", card_class="sm:max-w-xl", class="grid grid-cols-3 md:grid-cols-4 gap-2 justify-center items-center")%}
+        {{card_button("Tienda", "shopping-cart", href="/shop")}}
+        {{card_button("Carrito", "handbag", href=url('carrito'))}}
+        {% if user.is_authenticated %}
+            {{card_button("Fondos", "hand-coins", href=url('fondos'))}}
+            {% if user.is_staff %}
+                {{card_button("Admin", "package", href="/shop-admin")}}
+            {% endif %}
+            {% if user.is_superuser %}
+                {{card_button("Superadmin", "crown", href="/admin")}}
+            {% endif %}
+
+            {{card_button("Logout", "user", href="/logout")}}
+        {% else %}
+            {{card_button("Login", "user", href="/login")}}
+            {{card_button("Registro", "user-plus", href="/signup")}}
+        {% endif %}
+        
+    {% endcall %}
+{% endcall %}

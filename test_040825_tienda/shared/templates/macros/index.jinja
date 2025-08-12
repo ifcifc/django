@@ -1,0 +1,77 @@
+{% from 'macros/navbar.jinja' import navbar %}
+{% from 'macros/card.jinja' import card %}
+{% from 'macros/dialog.jinja' import dialog_info %}
+
+{% macro index(class="items-center", default_class="flex justify-center gap-1", title='', user=None, hiddenNav=False,
+messages=None)%}
+
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    {% include 'partials/tailwindcss.jinja' %}
+    <script src="{{ static('js/tailwindcss.js') }}"></script>
+    <script src="{{ static('js/lucide.js') }}"></script>
+</head>
+
+<body class="h-full flex flex-col">
+    {% if not hiddenNav %}
+    {{navbar(user=user)}}
+    {% endif %}
+
+    <main class="{{default_class}} {{class}}">
+        {{ caller() }}
+    </main>
+
+    {% include 'partials/footer.jinja' %}
+    {% include 'partials/accesibility_menu.jinja' %}
+
+    {{ dialog_info(id="info", message="Esto es un ejemplo de mensaje de diálogo.") }}
+
+    <script>
+        const dialog = document.getElementById('dialog_info');
+        const dialogText = document.getElementById('dialog_text_info');
+        const dialogButton = document.getElementById('dialog_button_info');
+        const messages = [
+               {% if messages %}
+                    {% for message in messages %}
+                        "{{ message }}",
+                    {% endfor %}
+                {% endif %}
+        ];
+
+        const generator_message = function* () {
+            for (const message of messages) {
+                yield message;
+            }
+        }();
+
+        const show_message = () => {
+            const message = generator_message.next().value;
+
+            if (!message) {
+                dialog.close();
+                dialog.classList.add("hidden");
+                return;
+            }
+            dialog.classList.remove("hidden");
+            dialogText.textContent = message;
+            dialog.showModal();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            show_message();
+            lucide.createIcons();
+        });
+
+        dialogButton.addEventListener('click', () => {
+            show_message();
+        });
+    </script>
+</body>
+
+</html> 
+{% endmacro %}

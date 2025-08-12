@@ -1,0 +1,184 @@
+{% from 'macros/index.jinja' import index %}
+{% from 'macros/card.jinja' import card %}
+{% from 'macros/table.jinja' import table, col %}
+{% from 'macros/dialog.jinja' import dialog_form %}
+{% from 'macros/input.jinja' import input %}
+{% from 'macros/dialog.jinja' import dialog_form %}
+
+{% macro title() %}
+    <div class="flex items-center gap-2">
+        Detalles 
+        <a id="b_modificar"><i data-lucide="square-pen" class="w-5 h-5 select-none cursor-pointer hover:text-orange-600"></i></a>
+        <a id="b_eliminar"><i data-lucide="trash" class="w-5 h-5 select-none cursor-pointer hover:text-red-600"></i></a>
+    </div>
+{% endmacro %}
+
+{% macro title_stock() %}
+    <div class="flex items-center gap-2">
+        Stock
+        <a id="b_stock"><i data-lucide="square-pen" class="w-5 h-5 select-none cursor-pointer hover:text-orange-600"></i></a>
+    </div>
+{% endmacro %}
+
+{% call index(class="py-4 flex-col justify-center items-center", title="admin", user=user, messages=messages) %}
+    {% call card(title(), card_class="sm:max-w-3xl") %}
+        <div class="flex gap-4">
+            <div class="w-1/4 hover:brightness-150 cursor-pointer" id="b_image">
+                <img src="{{ articulo.imagen.url }}" alt="{{ articulo.nombre }}" class="w-full max-h-72 object-cover">
+            </div>
+            <div>
+                <p class="flex items-center gap-2"><span class="font-bold min-w-24 block">Nombre:</span> {{ articulo.nombre }}</p>
+                <p class="flex items-center gap-2"><span class="font-bold min-w-24 block">Precio:</span> {{ articulo.precio }}</p>
+                <p class="flex items-center gap-2"><span class="font-bold min-w-24 block">Stock:</span> {{ articulo.stock_total(use_cache=False) }}</p>
+                <p class="flex items-center gap-2 break-words"><span class="font-bold min-w-24 block">Descripcion:</span> {{ articulo.descripcion }}</p>
+            </div>
+        </div>
+    {% endcall %}
+
+    {% call card(title_stock(), card_class="sm:max-w-3xl overflow-y-hidden max-h-128") %}
+        <div class="flex gap-4 overflow-y-auto max-h-100">
+            {% call table(header=["Fecha", "Cantidad"]) %}
+                {% for stock in stocks %}
+                    <tr>
+                        {{ col(body=stock.created_at|datetime("%d/%m/%Y %H:%M")) }}
+                        {{ col(body=stock.cantidad) }}
+                    </tr>
+                {% endfor %}
+            {% endcall %}
+        </div>
+    {% endcall %}
+
+    {% call card("Ventas", card_class="sm:max-w-3xl overflow-y-hidden max-h-128") %}
+        <div class="flex gap-4 overflow-y-auto max-h-100">
+            {% call table(header=["Fecha", "Precio", "Cantidad", "Total"]) %}
+                {% for venta in ventas %}
+                    <tr>
+                        {{ col(body=venta.created_at|datetime("%d/%m/%Y %H:%M")) }}
+                        {{ col(body=venta.precio) }}
+                        {{ col(body=venta.stock.cantidad  | abs) }}
+                        {{ col(body=venta.movimiento.monto | abs) }}
+                    </tr>
+                {% endfor %}
+            {% endcall %}
+        </div>
+    {% endcall %}
+
+    {% call card("Historial", card_class="sm:max-w-3xl overflow-y-hidden max-h-128") %}
+        <div class="flex gap-4 overflow-y-auto max-h-100">
+            {% call table(header=["Fecha", "Nombre","Precio","Codigo", "Descripcion"]) %}
+                {% for articulo_historial in historial %}
+                    <tr class="hover:bg-gray-100 dark:hover:bg-black cursor-pointer"
+                        data-historial="{{ articulo_historial.id_articulo_historial }}"
+                        data-fecha="{{articulo_historial.created_at|datetime('%d/%m/%Y %H:%M')}}"
+                        name="historial-restore"
+                    >
+                        {{ col(body=articulo_historial.created_at|datetime("%d/%m/%Y %H:%M")) }}
+                        {{ col(body=articulo_historial.nombre) }}
+                        {{ col(body=articulo_historial.precio) }}
+                        {{ col(body=articulo_historial.codigo) }}
+                        {{ col(body=articulo_historial.descripcion, extra_class="break-words") }}
+                    </tr>
+                {% endfor %}
+            {% endcall %}
+        </div>
+    {% endcall %}
+{% endcall %}
+
+{% call dialog_form(id="restore", title="Restaurar articulo", csrf_token=csrf_token, button_text="Restaurar", action=url("admin_restaurar")) %}
+    <input type="hidden" name="historial_id" id="historial_id">
+    <p>¿Desea restaurar el articulo?</p>
+    <p><span class="font-bold">Fecha:</span> <span id="fecha"></span></p>
+{% endcall %}
+
+
+{% call dialog_form(id="eliminar", title="Eliminar articulo", csrf_token=csrf_token, action=url("admin_eliminar")) %}
+    <input type="hidden" name="codigo" value="{{ articulo.codigo }}">
+    <h3>Esta seguro que desea eliminar el articulo?</h3>
+    <p>Esta accion no se puede deshacer</p>
+    <p><span class="font-bold">Articulo:</span> <span>{{ articulo.nombre }}</span></p>
+    <p><span class="font-bold">Codigo:</span> <span>{{ articulo.codigo }}</span></p>
+{% endcall %}
+
+{% call dialog_form(id="imagen", title="Cambiar imagen", csrf_token=csrf_token, button_text="Cambiar", action=url("admin_cambiar_image"), enctype="multipart/form-data") %}
+    <input type="hidden" name="codigo" value="{{ articulo.codigo }}">
+    <p>¿Desea cambiar la imagen del articulo?</p>
+    <div class="mb-4">
+    <label for="imagen" class="block text-sm font-medium text-gray-700 mb-1">
+        Subir imagen <span class="text-xs text-gray-500">(Formatos: JPG, PNG, WEBP, máximo 5MB)</span>
+    </label>
+    <div class="relative">
+        <input 
+            type="file" 
+            name="imagen" 
+            id="imagen" 
+            accept="image/jpeg, image/png, image/webp"
+            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+        >
+        <div class="bg-orange-600 text-white px-4 py-2 rounded-md inline-flex items-center justify-center border border-transparent hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors duration-200">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+            </svg>
+            <span>Seleccionar archivo</span>
+        </div>
+        <p id="file-name" class="mt-1 text-sm text-gray-500">Ningún archivo seleccionado</p>
+    </div>
+</div>
+
+<script>
+    document.getElementById('imagen').addEventListener('change', function(e) {
+        const fileName = e.target.files[0] ? e.target.files[0].name : 'Ningún archivo seleccionado';
+        document.getElementById('file-name').textContent = fileName;
+    });
+</script>
+{% endcall %}
+
+{% call dialog_form(id="modificar", title="Modificar articulo", csrf_token=csrf_token, button_text="Modificar", action=url("admin_modificar")) %}
+    <input type="hidden" name="id_articulo" value="{{ articulo.id_articulo }}">
+    {{ input(name="nombre", label="Nombre", type="text", value=articulo.nombre) }}
+    {{ input(name="codigo", label="Codigo", type="text", value=articulo.codigo) }}
+    {{ input(name="precio", label="Precio", type="number", value=articulo.precio) }}
+    {{ input(name="descripcion", label="Descripcion", type="text", value=articulo.descripcion) }}
+{% endcall %}
+
+{% call dialog_form(id="stock", title="Añadir o quitar stock", csrf_token=csrf_token, action=url("admin_stock")) %}
+    <input type="hidden" name="codigo" value="{{ articulo.codigo }}">
+    <input type="hidden" name="to_detalles" value="1">
+    {{ input(name="cantidad", label="Cantidad", type="number") }}
+{% endcall %}
+
+<script>
+    document.addEventListener("DOMContentLoaded", ()=>{
+        const historial = document.querySelectorAll("[name='historial-restore']")
+        const eliminar = document.getElementById("b_eliminar")
+        const imagen = document.getElementById("b_image")
+        const modificar = document.getElementById("b_modificar")
+        const stock = document.getElementById("b_stock")
+
+        stock.addEventListener("click", ()=>{
+            document.getElementById("dialog_stock").classList.remove("hidden")
+        })
+        
+        eliminar.addEventListener("click", ()=>{
+            document.getElementById("dialog_eliminar").classList.remove("hidden")
+        })
+
+        modificar.addEventListener("click", ()=>{
+            document.getElementById("dialog_modificar").classList.remove("hidden")
+        })
+
+        imagen.addEventListener("click", ()=>{
+            document.getElementById("dialog_imagen").classList.remove("hidden")
+        })
+
+        historial.forEach((item)=>{
+            item.addEventListener("click", ()=>{
+                const historial_id = item.getAttribute("data-historial")
+                const fecha = item.getAttribute("data-fecha")
+                
+                document.getElementById("historial_id").value = historial_id
+                document.getElementById("fecha").textContent = fecha
+                document.getElementById("dialog_restore").classList.remove("hidden")
+            })
+        })
+    })
+</script>

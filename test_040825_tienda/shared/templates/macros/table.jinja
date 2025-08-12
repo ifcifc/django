@@ -1,0 +1,25 @@
+{% macro table(header=[]) %}
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead> 
+            <tr>
+                {% for h in header %}
+                    <td class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ h }}</td>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+        {{caller()}}
+        </tbody>
+    </table>
+{% endmacro %}
+
+
+{% macro col(class="px-6 py-4 whitespace-nowrap text-sm text-gray-900", extra_class="", body=none) %}
+    <td class="{{class}} {{extra_class}}">
+        {% if body is not none %}
+            {{body}}
+        {% else %}
+            {{caller()}}
+        {% endif %}
+    </td>
+{% endmacro %}

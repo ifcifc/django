@@ -1,0 +1,10 @@
+{% from 'macros/index.jinja' import index %}
+{% from 'macros/card.jinja' import card %}
+{% from 'macros/card_button.jinja' import card_button %}
+
+{% call index(class="py-4", title="admin", user=user) %}
+    {% call card("Admin", card_class="sm:max-w-md", class="flex gap-4 justify-center items-center")%}
+        {{card_button("Articulos", "shopping-cart", href=url('admin_articulos'))}}
+        {{card_button("Ventas", "shopping-cart", href=url('admin_ventas'))}}
+    {% endcall %}
+{% endcall %}

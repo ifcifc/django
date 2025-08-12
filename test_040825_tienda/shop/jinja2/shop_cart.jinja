@@ -1,0 +1,99 @@
+{% from 'macros/index.jinja' import index %}
+{% from 'macros/card.jinja' import card %}
+{% from 'macros/table.jinja' import table, col %}
+
+{% macro title()%}
+<div class="flex justify-between items-center">
+    Carrito
+    {% if carrito %}
+        {% if user.is_authenticated %}
+            {% if get_monto(user) > carrito_calc_total(request) %}
+                <a id="b_action1" href="{{url('comprar')}}" class="bg-orange-600 select-none text-white cursor-pointer px-2 py-1 hover:bg-orange-500">Comprar</a>
+                <a id="b_action2" href="{{url('fondos')}}" class="bg-orange-600 select-none text-white cursor-pointer px-2 py-1 hover:bg-orange-500 hidden">Sin fondos</a>
+            {% else %}
+                <a id="b_action2" href="{{url('fondos')}}" class="bg-orange-600 select-none text-white cursor-pointer px-2 py-1 hover:bg-orange-500">Sin fondos</a>
+                <a id="b_action1" href="{{url('comprar')}}" class="bg-orange-600 select-none text-white cursor-pointer px-2 py-1 hover:bg-orange-500 hidden">Comprar</a>
+            {% endif %}
+        {% else %} 
+            <a href="{{url('login')}}" class="bg-orange-600 select-none text-white cursor-pointer px-2 py-1 hover:bg-orange-500">Login</a>
+        {% endif %}
+    {% else %}
+        <a href="{{url('tienda')}}" class="bg-orange-600 select-none text-white cursor-pointer px-2 py-1 hover:bg-orange-500">Comprar</a>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% call index(class="py-4", title="Carrito", user=user, messages=messages) %}
+    {% call card(title())%}
+        {% call table(header=["Artículo", "Precio", "Carrito", "Total"]) %}
+            {#Por alguna razon no cambia el valor en el for si uso una variable normal#}
+            {#% set ns = namespace(total=0) %#}
+            {% for articulo in articulos %}
+            <tr>
+                {{ col(body=articulo.nombre) }}
+                {{ col(body=articulo.precio) }}
+                {% call col(class="px-6 py-4 flex max-w-38") %}
+                    <button name="b-menos" data-articulo="{{articulo.codigo}}" type="button"
+                        class="w-8 h-8 bg-orange-600 text-white flex items-center justify-center select-none cursor-pointer hover:bg-orange-500"><i
+                            data-lucide="minus"></i></button>
+                    <input id="id_val_{{articulo.codigo}}" data-articulo="{{articulo.codigo}}"
+                        data-precio="{{articulo.precio}}" name="carrito_value" value="{{carrito[articulo.codigo] or 0}}"
+                        type="number" value="1" min="0" max="{{articulo.stock_total()}}"
+                        class="w-16 h-8 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <button name="b-mas" data-articulo="{{articulo.codigo}}" type="button"
+                        class="w-8 h-8 bg-orange-600 text-white flex items-center justify-center select-none cursor-pointer hover:bg-orange-500"><i
+                            data-lucide="plus"></i></button>
+                {% endcall %}
+                <td id="id_total_{{articulo.codigo}}" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{{carrito[articulo.codigo] * articulo.precio}}</td>
+                {#% set ns.total = ns.total + carrito[articulo.codigo] * articulo.precio %#}
+            </tr>
+            {% endfor %}
+
+            <tr>
+                <td></td>
+                <td></td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">Total</td>
+                <td id="id_total" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{{carrito_calc_total(request)}}</td>
+            </tr>
+        {% endcall %}
+    {% endcall %}
+{% endcall %}
+
+{% include 'partials/script_carrito.jinja' %}
+
+<script>
+    {% if user.is_authenticated %}
+        const fondos = {{get_monto(user)}}
+    {% else %}
+        const fondos = 0
+    {% endif %}
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const input_carrito = document.getElementsByName("carrito_value")
+        input_carrito.forEach(input => input.addEventListener("change", () => {
+            const articulo = input.getAttribute("data-articulo")
+            const precio = input.getAttribute("data-precio")
+            const valor = input.value
+            const total = precio * valor
+            document.querySelector("#id_total_" + articulo).textContent = total.toFixed(2)
+
+            const calc_total = Array
+                .from(input_carrito)
+                .reduce((total, input) => {
+                    const precio = input.getAttribute("data-precio")
+                    return total + parseFloat(input.value) * precio
+                }, 0)
+
+            document.querySelector("#id_total").textContent = calc_total.toFixed(2)
+
+            if(calc_total > fondos){
+                document.querySelector("#b_action1")?.classList.add("hidden")
+                document.querySelector("#b_action2")?.classList.remove("hidden")
+            }else{
+                document.querySelector("#b_action2")?.classList.add("hidden")
+                document.querySelector("#b_action1")?.classList.remove("hidden")
+            }
+
+        }))
+    })
+</script>

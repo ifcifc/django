@@ -1,0 +1,6 @@
+{% macro card_button(title="", icon="", icon_class="h-16 w-16", class="h-32 w-32", href="", id="") %}
+<a href="{{href}}" id="{{id}}" class="flex flex-col items-center justify-center gap-2 border border-gray-200 p-2 rounded-lg hover:bg-gray-200 select-none cursor-pointer {{class}}">
+    <i data-lucide="{{icon}}" class="{{icon_class}}"></i>
+    {{title}}
+</a>
+{% endmacro %}
